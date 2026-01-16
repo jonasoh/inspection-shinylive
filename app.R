@@ -12,6 +12,8 @@ avg_stats_by_fault <- readRDS("data/avg_stats_by_fault.rds")
 stats_age <- readRDS("data/stats_age.rds")
 stats_age_by_year <- readRDS("data/stats_age_by_year.rds")
 brand_stats_by_age <- readRDS("data/brand_stats_by_age.rds")
+model_breakdown_by_age <- readRDS("data/model_breakdown_by_age.rds")
+model_breakdown_by_year <- readRDS("data/model_breakdown_by_year.rds")
 
 # Extract metadata
 years <- metadata$years
@@ -42,7 +44,7 @@ ui <- page_navbar(
               href = "https://trafi2.stat.fi/PXWeb/pxweb/en/TraFi/TraFi__Katsastuksen_vikatilastot/?tablelist=true",
               target = "_blank"),
             "which details the results of periodic inspections for all car models with over 100 inspected cars per year."),
-          p("For the ranking by registration year and age, as well as for the brand leaderboard, only model-related errors which cause a demand for repair is accounted for,",
+          p("For the ranking by registration year and age, as well as for the brand leaderboard, only model-related errors which cause a demand for repair are accounted for,",
             "i.e., broken parking lights or slightly rusted brake discs do not affect the ratings."),
           p("As statistics are aggregated by model and fault category, some models will have over 100% fault rating. This is a necessary consequence of how the data are delivered by Traficom, and arguably the better way to present the data."),
           p("Use the navigation tabs above to choose which statistics to view.")
@@ -130,6 +132,22 @@ ui <- page_navbar(
           card_header("Fault % by Vehicle Age"),
           card_body(plotlyOutput("compare_by_age_plot", height = "400px"))
         )
+      )
+    )
+  ),
+  
+  nav_panel(
+    title = "Car model breakdown",
+    icon = icon("chart-pie"),
+    layout_column_wrap(
+      width = 1,
+      card(
+        card_header("Distribution of Car Brands by Vehicle Age"),
+        card_body(plotlyOutput("breakdown_by_age_plot", height = "500px"))
+      ),
+      card(
+        card_header("Distribution of Car Brands by Year of Inspection"),
+        card_body(plotlyOutput("breakdown_by_year_plot", height = "500px"))
       )
     )
   )
@@ -306,6 +324,38 @@ server <- function(input, output) {
         yaxis = list(title = "Fault %", ticksuffix = "%"),
         hovermode = "x unified",
         legend = list(orientation = "h", y = -0.2)
+      )
+    
+    p
+  })
+
+  output$breakdown_by_age_plot <- renderPlotly({
+    dt <- copy(model_breakdown_by_age)
+    
+    p <- plot_ly(dt, x = ~vehicle_age, y = ~percentage, color = ~model,
+                 type = "scatter", mode = "lines", stackgroup = "one",
+                 hovertemplate = "%{fullData.name}: %{y:.1f}%<extra></extra>") %>%
+      layout(
+        xaxis = list(title = "Vehicle Age (years)"),
+        yaxis = list(title = "Percentage of Cars", ticksuffix = "%"),
+        hovermode = "x unified",
+        legend = list(title = list(text = "Brand"))
+      )
+    
+    p
+  })
+
+  output$breakdown_by_year_plot <- renderPlotly({
+    dt <- copy(model_breakdown_by_year)
+    
+    p <- plot_ly(dt, x = ~year_of_inspection, y = ~percentage, color = ~model,
+                 type = "scatter", mode = "lines", stackgroup = "one",
+                 hovertemplate = "%{fullData.name}: %{y:.1f}%<extra></extra>") %>%
+      layout(
+        xaxis = list(title = "Year of Inspection"),
+        yaxis = list(title = "Percentage of Cars", ticksuffix = "%"),
+        hovermode = "x unified",
+        legend = list(title = list(text = "Brand"))
       )
     
     p

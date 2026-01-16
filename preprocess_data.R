@@ -231,6 +231,60 @@ brand_stats_by_age <- stats_model_year[,
 setorder(brand_stats_by_age, registration_year, brand)
 save_data(brand_stats_by_age, "brand_stats_by_age")
 
+message("Computing model_breakdown_by_age...")
+model_breakdown_by_age <- stats[,
+  .(
+    number_of_inspections = sum(number_of_inspections)
+  ),
+  by = .(vehicle_age, brand)
+][,
+  .(
+    total = sum(number_of_inspections),
+    brand = brand,
+    number_of_inspections = number_of_inspections
+  ),
+  by = vehicle_age
+][,
+  percentage := (number_of_inspections / total) * 100
+][percentage < 2.5,
+  brand := "Other"
+][,
+  .(
+    percentage = sum(percentage)
+  ),
+  by = .(vehicle_age, brand)
+]
+setnames(model_breakdown_by_age, "brand", "model")
+setorder(model_breakdown_by_age, vehicle_age, -percentage)
+save_data(model_breakdown_by_age, "model_breakdown_by_age")
+
+message("Computing model_breakdown_by_year...")
+model_breakdown_by_year <- stats[,
+  .(
+    number_of_inspections = sum(number_of_inspections)
+  ),
+  by = .(year_of_inspection, brand)
+][,
+  .(
+    total = sum(number_of_inspections),
+    brand = brand,
+    number_of_inspections = number_of_inspections
+  ),
+  by = year_of_inspection
+][,
+  percentage := (number_of_inspections / total) * 100
+][percentage < 2.5,
+  brand := "Other"
+][,
+  .(
+    percentage = sum(percentage)
+  ),
+  by = .(year_of_inspection, brand)
+]
+setnames(model_breakdown_by_year, "brand", "model")
+setorder(model_breakdown_by_year, year_of_inspection, -percentage)
+save_data(model_breakdown_by_year, "model_breakdown_by_year")
+
 message("\nPreprocessing complete!")
 message(sprintf("RDS files written to: %s/", rds_dir))
 message(sprintf("TSV files written to: %s/", tsv_dir))
