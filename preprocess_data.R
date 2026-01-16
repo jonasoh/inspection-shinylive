@@ -303,5 +303,14 @@ if (dir.exists(site_dir)) {
 shinylive::export(appdir = app_staging, destdir = site_dir)
 unlink(app_staging, recursive = TRUE)
 
+# Modify the title in the exported index.html
+index_html_path <- file.path(site_dir, "index.html")
+if (file.exists(index_html_path)) {
+  html_content <- readLines(index_html_path)
+  html_content <- gsub("<title>Shiny App</title>", "<title>Car Inspection Stats</title>", html_content)
+  writeLines(html_content, index_html_path)
+  message("Updated index.html title to 'Car Inspection Stats'")
+}
+
 message(sprintf("\nDeployable site created at: %s/", site_dir))
 message("To preview locally: httpuv::runStaticServer(site_dir)")
